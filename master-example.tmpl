@@ -1,0 +1,139 @@
+#cloud-config
+hostname: {{ my.hostname}}
+
+ssh_authorized_keys:
+    {% for pubkey in my.pubkeys -%}
+    - {{ pubkey }}
+    {% endfor %}
+coreos:
+  etcd2:
+    name: "{{ my.nodename }}"
+    data-dir: /var/lib/etcd2
+    # clients
+    advertise-client-urls: https://{{ my.ip }}:2379
+    listen-client-urls: https://0.0.0.0:2379
+    # peers
+    initial-advertise-peer-urls: https://{{ my.ip }}:2380
+    listen-peer-urls: https://{{ my.ip }}:2380
+    # cluster
+    initial-cluster: {{ my.nodename }}=https://{{ my.ip }}:2380,{% for node in remaining_nodes %}{{ node.nodename }}=https://{{ node.ip }}:2380
+            {%- if not loop.last %},{% endif %}{% endfor %}
+    initial-cluster-state: new
+    initial-cluster-token: etcd-cluster-1
+  flannel:
+    interface: {{ my.ip }}
+    etcd_endpoints: https://{{ my.ip }}:2379,{% for node in remaining_nodes %}https://{{ node.ip }}:2379
+            {%- if not loop.last %},{% endif %}{% endfor %}
+    etcd_cafile: /etc/ssl/etcd/ca.cert
+    etcd_certfile: /etc/ssl/etcd/{{ my.hostname }}.crt
+    etcd_keyfile: /etc/ssl/etcd/{{ my.hostname }}.key
+    remote_cafile: /etc/ssl/etcd/ca.crt
+    remote_certfile: /etc/ssl/etcd/{{ my.hostname }}.crt
+    remote_keyfile: /etc/ssl/etcd/{{ my.hostname }}.key
+    # Workaround for timeout issues
+    # heartbeat-interval: 400
+    # election-timeout: 2000
+  locksmith:
+    endpoint: https://{{ my.ip }}:2379,{% for node in remaining_nodes %}https://{{ node.ip }}:2379
+            {%- if not loop.last %},{% endif %}{% endfor %}
+    etcd_cafile: /etc/ssl/etcd/ca.crt
+    etcd_certfile: /etc/ssl/etcd/{{ my.hostname }}.crt
+    etcd_keyfile: /etc/ssl/etcd/{{ my.hostname }}.key
+  update:
+    reboot-strategy: "best-effort"
+  units:
+    - name: 00-eth0-network
+      runtime: true
+      content: |
+        [Match]
+        Name=eth0
+
+        [Network]
+        {% for nameserv in my.dns -%}
+        DNS={{ nameserv }}
+        {% endfor %}
+        Address={{ my.ip }}/{{ my.subnet }}
+        Gateway={{ my.gateway }}
+    - name: etcd2.service
+      drop-ins:
+        - name: 30-certificates.conf
+          content: |
+            [Service]
+            # Client Env Vars
+            Environment=ETCD_CA_FILE=/etc/ssl/etcd/ca.crt
+            Environment=ETCD_CERT_FILE=/etc/ssl/etcd/{{ my.hostname }}.crt
+            Environment=ETCD_KEY_FILE=/etc/ssl/etcd/{{ my.hostname }}.key
+            # Peers Env Vars
+            Environment=ETCD_PEER_CA_FILE=/etc/ssl/etcd/ca.crt
+            Environment=ETCD_PEER_CERT_FILE=/etc/ssl/etcd/{{ my.hostname }}.crt
+            Environment=ETCD_PEER_KEY_FILE=/etc/ssl/etcd/{{ my.hostname }}.key
+      command: "start"
+    - name: flanneld.service
+      drop-ins:
+        - name: 50-network-config.conf
+          content: |
+           [Service]
+           Environment=FLANNELD_IFACE={{ my.ip }}
+           Environment=ETCDCTL_CA_FILE=/etc/ssl/etcd/ca.crt
+           Environment=ETCDCTL_CERT_FILE=/etc/ssl/etcd/{{ my.hostname }}.crt
+           Environment=ETCDCTL_KEY_FILE=/etc/ssl/etcd/{{ my.hostname }}.key
+           Environment=ETCDCTL_ENDPOINT=https://127.0.0.1:2379
+           ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{ "Network": "{{ my.flannelnet }}" }'
+      command: start
+write_files:
+  - path: "/etc/resolv.conf"
+    permissions: "0644"
+    owner: "root"
+    content: |
+      {% for nameserv in my.dns -%}
+        nameserver {{ nameserv }}
+      {% endfor %}
+  - path: /etc/ssh/sshd_config
+    permissions: 600
+    owner: root:root
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+      AllowUsers core kube
+  - path: /etc/profile.d/01-etcd.sh
+    permissions: 0644
+    owner: root
+    content: |
+      export ETCDCTL_CA_FILE=/etc/ssl/etcd/ca.crt
+      export ETCDCTL_CERT_FILE=/etc/ssl/etcd/{{ my.hostname }}.crt
+      export ETCDCTL_KEY_FILE=/etc/ssl/etcd/{{ my.hostname }}.key
+      export ETCDCTL_ENDPOINT=https://127.0.0.1:2379
+  - path: /etc/ssl/etcd/ca.crt
+    permissions: "0644"
+    content: |
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----
+  - path: /etc/ssl/etcd/{{ my.hostname }}.crt
+    permissions: "0644"
+    content: |
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----
+  - path: /etc/ssl/etcd/{{ my.hostname }}.key
+    permissions: "0640"
+    owner: "root:etcd"
+    content: |
+      -----BEGIN PRIVATE KEY-----
+      ...
+      -----END PRIVATE KEY-----
+  - path: /home/kube/.ssh/id_ed25519
+    permissions: 600
+    owner: kube:kube
+    content: |
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      ...
+      -----END OPENSSH PRIVATE KEY-----
+
+users:
+  - name: "kube"
+    ssh-authorized-keys:
+      {% for pubkey in my.kubernetes.kubeuser.pubkeys -%}
+      - {{ pubkey }}
+      {% endfor %}

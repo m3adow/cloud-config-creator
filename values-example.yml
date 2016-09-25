@@ -1,0 +1,53 @@
+# Sequence of Mappings, one mapping per node
+---
+-
+  hostname: node1.example.org
+  ip: 1.2.3.4
+  subnet: 24
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+  nodename: node1
+  pubkeys:
+    - ssh-ed25519 ...
+    - ssh-rsa ...
+  flannelnet: 10.1.0.0/16
+  kubernetes:
+    kubeuser:
+      pubkeys:
+        - ssh-rsa ...
+        - ssh-ed25519 ...
+-
+  hostname: node2.example.org
+  ip: 2.3.4.5
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+  nodename: node2
+  pubkeys:
+    - ssh-ed25519 ...
+    - ssh-rsa ...
+  flannelnet: 10.2.0.0/16
+  kubernetes:
+    kubeuser:
+      pubkeys:
+        - ssh-rsa ...
+        - ssh-ed25519 ...
+-
+  hostname: node3.example.org
+  ip: 3.4.5.6
+  subnet: 24
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+  nodename: node3
+  pubkeys:
+    - ssh-ed25519 ...
+    - ssh-rsa ...
+  flannelnet: 10.3.0.0/16
+  kubernetes:
+    kubeuser:
+      pubkeys:
+        - ssh-rsa ...
+        - ssh-ed25519 ...
+
