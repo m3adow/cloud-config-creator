@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument("--valuesfile", help="Path to values files", metavar="VALUEFILE", required=True)
     parser.add_argument("--outpath", help="Directory for created files (default: ./)", metavar="OUTPATH",
                         required=False)
+    parser.add_argument("--includepath", help="Directory for includes", metavar="INCLUDEPATH")
 
     return parser.parse_args()
 
@@ -29,8 +30,10 @@ def main():
         nodes = yaml.load(f)
 
     # pprint(nodes)
-
-    templateLoader = jinja2.FileSystemLoader(searchpath=os.getcwd())
+    if args['outpath']:
+        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), args['outpath']], followlinks=True)
+    else:
+        templateLoader = jinja2.FileSystemLoader(searchpath=os.getcwd(), followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader)
 
     for node in nodes:
@@ -43,7 +46,7 @@ def main():
             "my": node,
             "remaining_nodes": remaining_nodes
         }))
-
+        break
         with open(outpath + "/" + node['hostname'], "w") as f:
             f.write(template.render({
                 "my": node,

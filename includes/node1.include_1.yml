@@ -1,0 +1,5 @@
+# Workaround for timeout issues on node1
+coreos:
+  flannel:
+    heartbeat-interval: 400
+    election-timeout: 2000

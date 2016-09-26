@@ -137,3 +137,5 @@ users:
       {% for pubkey in my.kubernetes.kubeuser.pubkeys -%}
       - {{ pubkey }}
       {% endfor %}
+
+{% include '%s' % my.include ignore missing %}

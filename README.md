@@ -18,3 +18,6 @@ This will create files named like the hostname for each cluster node in the valu
 directory.
 
 You can use `--outpath` to alter the output directory for created files.
+
+Furthermore you can add includes to every node, see the master-example.tmpl to see how. If you want, you can stash your includes
+in a different path, this path can be added via `--includepath`.
