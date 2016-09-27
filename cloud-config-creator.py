@@ -30,8 +30,8 @@ def main():
         nodes = yaml.load(f)
 
     # pprint(nodes)
-    if args['outpath']:
-        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), args['outpath']], followlinks=True)
+    if args.includepath:
+        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), args.includepath], followlinks=True)
     else:
         templateLoader = jinja2.FileSystemLoader(searchpath=os.getcwd(), followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader)
@@ -42,15 +42,17 @@ def main():
 
         template = templateEnv.get_template(args.templatefile)
 
+        '''
         print(template.render({
             "my": node,
             "remaining_nodes": remaining_nodes
         }))
-        break
-        with open(outpath + "/" + node['hostname'], "w") as f:
+        '''
+        with open(outpath + "/" + node['hostname'] + '.yml', "w") as f:
             f.write(template.render({
                 "my": node,
-                "remaining_nodes": remaining_nodes
+                "remaining_nodes": remaining_nodes,
+                "nodes": nodes
                 }))
 
 
