@@ -10,11 +10,11 @@ from pprint import pprint
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument("--templatefile", help="Path to template file", metavar="TEMPLATEFILE", required=True)
-    parser.add_argument("--valuesfile", help="Path to values files", metavar="VALUEFILE", required=True)
-    parser.add_argument("--outpath", help="Directory for created files (default: ./)", metavar="OUTPATH",
+    parser.add_argument("-t", "--templatefile", help="Path to template file", metavar="TEMPLATEFILE", required=True)
+    parser.add_argument("-f", "--valuesfile", help="Path to values files", metavar="VALUEFILE", required=True)
+    parser.add_argument("-o", "--outpath", help="Directory for created files (default: ./)", metavar="OUTPATH",
                         required=False)
-    parser.add_argument("--includepath", help="Directory for includes", metavar="INCLUDEPATH")
+    parser.add_argument("-i", "--includepath", help="Directory for includes", metavar="INCLUDEPATH")
 
     return parser.parse_args()
 
