@@ -32,7 +32,8 @@ def main():
 
     # pprint(nodes)
     if args.includepath:
-        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), args.includepath], followlinks=True)
+        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile),
+                                                             args.includepath], followlinks=True)
     else:
         templateLoader = jinja2.FileSystemLoader(searchpath=os.getcwd(), followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader)
