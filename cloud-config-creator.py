@@ -20,7 +20,8 @@ def parse_args():
 
 def parse_valuesfile(f):
     f_content = yaml.load(f)
-    global_values = f_content.get('globals', {})
+    global_values = f_content.get('global', {})
+    print(global_values)
     nodes = f_content.get('nodes', {})
 
     for node in nodes:
@@ -48,7 +49,7 @@ def main():
         templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile)],
                                                  followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader)
-
+    print(nodes)
     for node in nodes:
         remaining_nodes = list(nodes)
         remaining_nodes.remove(node)
