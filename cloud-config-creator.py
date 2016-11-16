@@ -5,7 +5,6 @@ import jinja2
 
 
 from argparse import ArgumentParser
-from pprint import pprint
 
 
 def parse_args():
@@ -19,6 +18,18 @@ def parse_args():
     return parser.parse_args()
 
 
+def parse_valuesfile(f):
+    f_content = yaml.load(f)
+    global_values = f_content.get('globals', {})
+    nodes = f_content.get('nodes', {})
+
+    for node in nodes:
+        if 'override' in global_values:
+            node.update(global_values['override'])
+
+    return nodes
+
+
 def main():
     args = parse_args()
 
@@ -27,15 +38,15 @@ def main():
     else:
         outpath = os.getcwd()
 
-    with open(args.valuesfile) as f:
-        nodes = yaml.load(f)
+    with open(args.valuesfile, 'r') as f:
+        nodes = parse_valuesfile(f)
 
-    # pprint(nodes)
     if args.includepath:
         templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile),
                                                              args.includepath], followlinks=True)
     else:
-        templateLoader = jinja2.FileSystemLoader(searchpath=os.getcwd(), followlinks=True)
+        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile)],
+                                                 followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader)
 
     for node in nodes:
@@ -44,12 +55,6 @@ def main():
 
         template = templateEnv.get_template(args.templatefile)
 
-        '''
-        print(template.render({
-            "my": node,
-            "remaining_nodes": remaining_nodes
-        }))
-        '''
         with open(outpath + "/" + node['hostname'] + '.yml', "w") as f:
             f.write(template.render({
                 "my": node,
