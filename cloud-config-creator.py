@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("-f", "--valuesfile", help="Path to values files", metavar="VALUEFILE", required=True)
     parser.add_argument("-o", "--outpath", help="Directory for created files (default: ./)", metavar="OUTPATH",
                         required=False)
-    parser.add_argument("-i", "--includepath", help="Directory for includes", metavar="INCLUDEPATH")
+    parser.add_argument("-i", "--includepath", help="Directory for includes", metavar="INCLUDEPATH", default="")
 
     return parser.parse_args()
 
@@ -58,12 +58,8 @@ def main():
     with open(args.valuesfile, 'r') as f:
         nodes = parse_valuesfile(f)
 
-    if args.includepath:
-        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile),
-                                                             args.includepath], followlinks=True)
-    else:
-        templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile)],
-                                                 followlinks=True)
+    templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile),
+                                                             args.includepath.split(',')], followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader, undefined=jinja2.StrictUndefined)
 
     for node in nodes:
