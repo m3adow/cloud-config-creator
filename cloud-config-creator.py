@@ -58,8 +58,8 @@ def main():
     with open(args.valuesfile, 'r') as f:
         nodes = parse_valuesfile(f)
 
-    templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile),
-                                                             *args.includepath.split(',')], followlinks=True)
+    templateLoader = jinja2.FileSystemLoader(searchpath=[os.getcwd(), os.path.dirname(args.templatefile)] +
+                                                        [arg for arg in args.includepath.split(',')], followlinks=True)
     templateEnv = jinja2.Environment(loader=templateLoader, undefined=jinja2.StrictUndefined)
 
     for node in nodes:
